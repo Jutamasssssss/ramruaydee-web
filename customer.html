@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ห้างทองร่ำรวยดี — สมาชิก</title>
+<style>
+:root {
+  --gold: #C9A227;
+  --gold-dark: #8B6914;
+  --gold-light: #FFF8DC;
+  --bg: #FAF8F3;
+  --surface: #FFFFFF;
+  --text: #2C2C2A;
+  --text2: #666;
+  --text3: #999;
+  --border: #E8E4D8;
+  --success: #2D9166;
+  --danger: #C73E3A;
+  --warning: #D88A1F;
+  --line: #06C755;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body { padding-bottom: 60px; }
+
+/* Loading */
+.loading-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+  z-index: 999;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--gold-light);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: white;
+  padding: 20px 16px 28px;
+  text-align: center;
+  position: relative;
+}
+.header h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.header .subtitle { font-size: 12px; opacity: 0.9; }
+.shop-logo {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 10px;
+  overflow: hidden;
+}
+.shop-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+/* User card */
+.user-card {
+  background: var(--surface);
+  margin: -18px 16px 16px;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: flex; align-items: center; gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+.user-card img {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+}
+.user-card .info { flex: 1; min-width: 0; }
+.user-card .name { font-weight: 600; font-size: 15px; }
+.user-card .phone { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  margin: 0 16px;
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  margin-bottom: 16px;
+}
+.tab {
+  flex: 1; text-align: center;
+  padding: 10px 8px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab.active {
+  background: var(--gold);
+  color: white;
+}
+
+/* Content */
+.tab-content { padding: 0 16px; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.card-title { font-size: 14px; font-weight: 600; }
+.card-num { font-size: 11px; color: var(--text3); font-family: monospace; }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.badge-active { background: #E8F5EE; color: var(--success); }
+.badge-warning { background: #FFF4E5; color: var(--warning); }
+.badge-danger { background: #FBE8E7; color: var(--danger); }
+.badge-redeemed { background: #E8E8E8; color: var(--text2); }
+.badge-completed { background: #FFF8DC; color: var(--gold-dark); }
+
+/* Stat row */
+.stat-row {
+  display: flex; justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.stat-row .label { color: var(--text2); }
+.stat-row .value { font-weight: 500; }
+.stat-row .value.highlight { color: var(--gold-dark); font-weight: 600; }
+
+/* Progress bar */
+.progress-bar {
+  height: 8px; background: var(--border);
+  border-radius: 4px; overflow: hidden;
+  margin: 8px 0;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--gold-light), var(--gold));
+  transition: width 0.6s;
+}
+
+/* Empty */
+.empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--text3); font-size: 13px;
+}
+.empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.4; }
+
+/* Login form */
+.login-form { padding: 30px 20px; }
+.login-form h2 { margin-bottom: 20px; text-align: center; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+.form-group input {
+  width: 100%; padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  background: var(--surface);
+}
+.form-group input:focus { outline: none; border-color: var(--gold); }
+.btn {
+  width: 100%; padding: 14px;
+  background: var(--gold);
+  color: white;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+}
+.btn:active { opacity: 0.85; }
+.btn-line { background: var(--line); }
+.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+.gold-price-card {
+  background: linear-gradient(135deg, var(--gold-light), #FFE9A8);
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.gold-price-card .label { font-size: 11px; color: var(--gold-dark); }
+.gold-price-card .price { font-size: 24px; font-weight: 700; color: var(--gold-dark); margin: 4px 0; }
+.gold-price-card .sub { font-size: 11px; color: var(--gold-dark); opacity: 0.7; }
+.saving-payment {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+.saving-payment-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-dark);
+  margin-bottom: 4px;
+}
+
+.error-box {
+  background: #FBE8E7; color: var(--danger);
+  padding: 12px; border-radius: 8px;
+  font-size: 13px; margin-bottom: 12px;
+}
+.info-box {
+  background: var(--gold-light); color: var(--gold-dark);
+  padding: 12px; border-radius: 8px;
+  font-size: 13px; margin-bottom: 12px;
+}
+
+.contact-row {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.contact-row a {
+  flex: 1; text-align: center; padding: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; text-decoration: none;
+  color: var(--text); font-size: 13px;
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div style="color:var(--text2);font-size:13px;">กำลังโหลด...</div>
+</div>
+
+<!-- Login form (first time) -->
+<div id="loginPage" style="display:none;">
+  <div class="header">
+    <div class="shop-logo" id="shopLogoLogin">◈</div>
+    <h1 id="shopNameLogin">ห้างทองร่ำรวยดี</h1>
+    <div class="subtitle">ระบบสมาชิก</div>
+  </div>
+  <div class="login-form">
+    <div class="info-box">
+      📱 กรุณายืนยันตัวตนด้วยเบอร์โทรที่ลงทะเบียนกับร้าน
+    </div>
+    <div class="form-group">
+      <label>เบอร์โทรที่ใช้กับร้าน</label>
+      <input type="tel" id="phoneInput" placeholder="0812345678" maxlength="10" inputmode="numeric">
+    </div>
+    <div id="loginError" style="display:none;" class="error-box"></div>
+    <button class="btn" onclick="doVerifyPhone()">ยืนยันตัวตน</button>
+    <div style="margin-top:14px;text-align:center;font-size:12px;color:var(--text3);">
+      ระบบจะตรวจสอบเบอร์ของคุณกับฐานข้อมูลของร้าน
+    </div>
+  </div>
+</div>
+
+<!-- Main app -->
+<div id="mainApp" style="display:none;">
+  <div class="header">
+    <div class="shop-logo" id="shopLogo">◈</div>
+    <h1 id="shopName">ห้างทองร่ำรวยดี</h1>
+    <div class="subtitle">ระบบสมาชิก</div>
+  </div>
+
+  <div class="user-card">
+    <img id="userAvatar" src="" alt="">
+    <div class="info">
+      <div class="name" id="userName">-</div>
+      <div class="phone" id="userPhone">-</div>
+    </div>
+  </div>
+
+  <div class="gold-price-card">
+    <div class="label">ราคาทองวันนี้</div>
+    <div class="price" id="goldPrice">฿72,230</div>
+    <div class="sub">บาทต่อทองคำ 1 บาท</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('savings')">💰 ออมทอง</div>
+    <div class="tab" onclick="switchTab('pawns')">📦 ตั๋วจำนำ</div>
+    <div class="tab" onclick="switchTab('history')">📜 ประวัติ</div>
+  </div>
+
+  <div class="tab-content">
+    <div id="tab-savings" class="tab-pane active">
+      <div id="savingsList"></div>
+    </div>
+    <div id="tab-pawns" class="tab-pane">
+      <div id="pawnsList"></div>
+    </div>
+    <div id="tab-history" class="tab-pane">
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <div style="padding:0 16px 20px;">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px;">ติดต่อร้าน</div>
+      <div class="contact-row">
+        <a id="contactPhone" href="tel:">📞 โทร</a>
+        <a id="contactMap" href="#" target="_blank">📍 แผนที่</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase + LIFF -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc, getDocs }
+  from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBvSzkwvetsGtthnNljRZGMnlUC3pzfhXs",
+  authDomain: "gold-shop-acf19.firebaseapp.com",
+  projectId: "gold-shop-acf19",
+  storageBucket: "gold-shop-acf19.firebasestorage.app",
+  messagingSenderId: "10469108848",
+  appId: "1:10469108848:web:c6bcefb2444ce4d55458b5"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const fbDb = getFirestore(fbApp);
+
+window._fb = {
+  getAll: async (col) => {
+    const snap = await getDocs(collection(fbDb, col));
+    return snap.docs.map(d => d.data());
+  },
+  saveDoc: async (col, id, data) => {
+    await setDoc(doc(fbDb, col, String(id)), data);
+  },
+  getDoc: async (col, id) => {
+    const s = await getDoc(doc(fbDb, col, String(id)));
+    return s.exists() ? s.data() : null;
+  },
+  listen: (col, cb) => {
+    return onSnapshot(collection(fbDb, col), (snap) => {
+      cb(snap.docs.map(d => d.data()));
+    });
+  }
+};
+window._fbReady = true;
+</script>
+
+<!-- LIFF SDK -->
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<script>
+const LIFF_ID = '2009946701-JhrTliQr';
+const GOLD_PRICE_API_URL = 'https://ramruaydee-linebot-production.up.railway.app/api/gold-price';
+
+let lineProfile = null;
+let myCustomer = null;
+let allSavings = [];
+let allPawns = [];
+let allTransactions = [];
+let shopSettings = {
+  name: 'ห้างทองร่ำรวยดี',
+  logo: '◈',
+  logoImage: '',
+  phone: '',
+  address: ''
+};
+
+// ============ INIT ============
+async function initApp() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    lineProfile = await liff.getProfile();
+    console.log('LINE Profile:', lineProfile);
+
+    // Wait for Firebase
+    let waited = 0;
+    while (!window._fbReady && waited < 5000) {
+      await new Promise(r => setTimeout(r, 100));
+      waited += 100;
+    }
+
+    // Load shop settings
+    try {
+      const s = await window._fb.getDoc('settings', 'shop');
+      if (s) shopSettings = { ...shopSettings, ...s };
+    } catch (e) { console.warn('No shop settings'); }
+
+    applyShopSettings();
+
+    await loadGoldPrice();
+
+    // Check if this LINE user is already linked to a customer
+    const customers = await window._fb.getAll('customers');
+    myCustomer = customers.find(c => c.lineUserId === lineProfile.userId);
+
+    if (myCustomer) {
+      // Already linked → show dashboard
+      await loadAndShowDashboard();
+    } else {
+      // Show phone verify form
+      showLoginPage();
+    }
+
+    document.getElementById('loadingScreen').style.display = 'none';
+  } catch (err) {
+    console.error('Init error:', err);
+    document.getElementById('loadingScreen').innerHTML = `
+      <div style="text-align:center;padding:30px;">
+        <div style="font-size:48px;margin-bottom:14px;">⚠️</div>
+        <div style="color:var(--danger);font-weight:600;margin-bottom:8px;">เกิดข้อผิดพลาด</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">${err.message || err}</div>
+        <button class="btn" onclick="location.reload()" style="max-width:200px;">ลองใหม่</button>
+      </div>
+    `;
+  }
+}
+
+async function loadGoldPrice() {
+  try {
+    const r = await fetch(GOLD_PRICE_API_URL, { cache: 'no-store' });
+    const data = await r.json();
+    if (data && data.ok && data.sell) {
+      document.getElementById('goldPrice').textContent = '฿' + Number(data.sell).toLocaleString('th-TH');
+      const sub = document.querySelector('.gold-price-card .sub');
+      if (sub) sub.textContent = `บาทต่อทองคำ 1 บาท · อัปเดต ${data.dateText || ''} ${data.timeText || ''}`;
+      return;
+    }
+  } catch (e) {
+    console.warn('Gold API unavailable, fallback to Firebase spot', e);
+  }
+
+  try {
+    const sp = await window._fb.getDoc('settings', 'spot');
+    if (sp && sp.value) {
+      document.getElementById('goldPrice').textContent = '฿' + Number(sp.value).toLocaleString('th-TH');
+    }
+  } catch (e) {}
+}
+
+function applyShopSettings() {
+  const logoHTML = shopSettings.logoImage
+    ? `<img src="${shopSettings.logoImage}" alt="logo">`
+    : (shopSettings.logo || '◈');
+  document.getElementById('shopLogo').innerHTML = logoHTML;
+  document.getElementById('shopLogoLogin').innerHTML = logoHTML;
+  document.getElementById('shopName').textContent = shopSettings.name;
+  document.getElementById('shopNameLogin').textContent = shopSettings.name;
+  document.title = shopSettings.name + ' — สมาชิก';
+
+  if (shopSettings.phone) {
+    document.getElementById('contactPhone').href = 'tel:' + shopSettings.phone.replace(/\D/g,'');
+  }
+  if (shopSettings.address) {
+    document.getElementById('contactMap').href = 'https://maps.google.com/?q=' + encodeURIComponent(shopSettings.address);
+  }
+}
+
+function showLoginPage() {
+  document.getElementById('loginPage').style.display = 'block';
+  document.getElementById('mainApp').style.display = 'none';
+}
+
+function showMainApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+}
+
+// ============ PHONE VERIFY ============
+async function doVerifyPhone() {
+  const phoneRaw = document.getElementById('phoneInput').value.replace(/\D/g, '');
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (phoneRaw.length < 9 || phoneRaw.length > 10) {
+    errEl.textContent = 'กรุณาใส่เบอร์โทร 9-10 หลัก';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // helper: ถอด non-digits และเทียบเบอร์แบบยืดหยุ่น
+  const matchPhone = (a, b) => {
+    if (!a || !b) return false;
+    const aa = String(a).replace(/\D/g, '');
+    const bb = String(b).replace(/\D/g, '');
+    if (!aa || !bb) return false;
+    return aa === bb || aa === '0' + bb || bb === '0' + aa || aa.endsWith(bb) || bb.endsWith(aa);
+  };
+
+  // 1. หาใน customers ก่อน
+  const customers = await window._fb.getAll('customers');
+  let found = customers.find(c => matchPhone(c.phone, phoneRaw));
+  let foundFromOther = null;
+
+  // 2. ถ้าไม่เจอใน customers — ค้นจาก savings, pawns, transactions
+  if (!found) {
+    const [savings, pawns, transactions] = await Promise.all([
+      window._fb.getAll('savings'),
+      window._fb.getAll('pawns'),
+      window._fb.getAll('transactions')
+    ]);
+
+    // หาทั้ง 3 collections
+    const fromSavings = savings.find(s => matchPhone(s.customerPhone || s.phone, phoneRaw));
+    const fromPawns = pawns.find(p => matchPhone(p.customerPhone || p.phone, phoneRaw));
+    const fromTrans = transactions.find(t => matchPhone(t.customerPhone || t.phone, phoneRaw));
+
+    foundFromOther = fromSavings || fromPawns || fromTrans;
+  }
+
+  if (!found && !foundFromOther) {
+    errEl.innerHTML = `เบอร์ <b>${phoneRaw}</b> ไม่พบในระบบของร้าน<br>กรุณาติดต่อร้านเพื่อลงทะเบียน`;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // ถ้าหาจาก collection อื่น — สร้าง customer record ใหม่
+  if (!found && foundFromOther) {
+    found = {
+      id: 'cust_' + phoneRaw + '_' + Date.now(),
+      name: foundFromOther.customerName || foundFromOther.customer || foundFromOther.name || lineProfile.displayName || 'ลูกค้า',
+      phone: phoneRaw,
+      points: 0,
+      transactions: []
+    };
+  }
+
+  // Link LINE userId to customer
+  found.lineUserId = lineProfile.userId;
+  found.lineDisplayName = lineProfile.displayName;
+  found.linePictureUrl = lineProfile.pictureUrl;
+  if (!found.id) found.id = 'cust_' + phoneRaw + '_' + Date.now();
+  if (!found.phone) found.phone = phoneRaw;
+
+  await window._fb.saveDoc('customers', found.id, found);
+  myCustomer = found;
+  await loadAndShowDashboard();
+}
+
+// ============ DASHBOARD ============
+async function loadAndShowDashboard() {
+  // Set user info
+  document.getElementById('userName').textContent = myCustomer.name || lineProfile.displayName;
+  document.getElementById('userPhone').textContent = '📱 ' + (myCustomer.phone || '-');
+  document.getElementById('userAvatar').src = lineProfile.pictureUrl || '';
+
+  // Load data
+  const [savings, pawns, transactions] = await Promise.all([
+    window._fb.getAll('savings'),
+    window._fb.getAll('pawns'),
+    window._fb.getAll('transactions')
+  ]);
+
+  const myPhone = (myCustomer.phone || '').replace(/\D/g, '');
+  const myId = myCustomer.id;
+  const myName = myCustomer.name;
+
+  // Helper: phone matching แบบยืดหยุ่น
+  const matchPhone = (a, b) => {
+    if (!a || !b) return false;
+    const aa = String(a).replace(/\D/g, '');
+    const bb = String(b).replace(/\D/g, '');
+    if (!aa || !bb) return false;
+    return aa === bb || aa === '0' + bb || bb === '0' + aa || aa.endsWith(bb) || bb.endsWith(aa);
+  };
+
+  allSavings = savings.filter(s =>
+    matchPhone(s.customerPhone || s.phone, myPhone) ||
+    s.customerId === myId ||
+    (myName && (s.customerName === myName || s.customer === myName))
+  );
+  allPawns = pawns.filter(p =>
+    matchPhone(p.customerPhone || p.phone, myPhone) ||
+    p.customerId === myId ||
+    (myName && (p.customerName === myName || p.customer === myName))
+  );
+  allTransactions = transactions.filter(t =>
+    matchPhone(t.customerPhone || t.phone, myPhone) ||
+    t.customerId === myId ||
+    (myName && (t.customerName === myName || t.customer === myName))
+  );
+
+  showMainApp();
+  renderSavings();
+  renderPawns();
+  renderHistory();
+}
+
+// ============ SAVINGS ============
+function toNumber(value) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function calcGoldWeight(payment) {
+  const storedWeight = toNumber(payment.goldWeight || payment.weight || payment.goldBaht);
+  if (storedWeight) return storedWeight;
+
+  const amount = toNumber(payment.deposit || payment.amount || payment.total);
+  const goldPrice = toNumber(payment.goldPrice || payment.pricePerBaht || payment.spot);
+  if (!amount || !goldPrice) return 0;
+  return amount / goldPrice;
+}
+
+function formatGoldWeight(weight) {
+  return Number(weight || 0).toLocaleString('th-TH', {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  });
+}
+
+function renderSavings() {
+  const el = document.getElementById('savingsList');
+  if (allSavings.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">💰</div>
+        <div>ยังไม่มีบัญชีออมทอง</div>
+        <div style="margin-top:6px;font-size:11px;">ติดต่อร้านเพื่อเปิดบัญชี</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = allSavings.map(s => {
+    const target = s.targetAmount || s.target || 0;
+    const current = s.currentAmount || s.current || s.totalDeposit || s.saved || 0;
+    const payments = Array.isArray(s.payments) ? s.payments : [];
+    const totalDeposit = payments.reduce((sum, p) => sum + toNumber(p.deposit || p.amount), 0);
+    const totalPaymentAmount = payments.reduce((sum, p) => sum + toNumber(p.total || p.deposit || p.amount), 0);
+    const totalGoldWeight = payments.reduce((sum, p) => sum + calcGoldWeight(p), 0);
+    const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+    const status = s.status || 'active';
+    const badge = status === 'completed'
+      ? '<span class="badge badge-completed">เสร็จสิ้น</span>'
+      : '<span class="badge badge-active">กำลังออม</span>';
+    const periods = payments.length || s.completedPeriods || 0;
+    const totalPeriods = s.totalPeriods || s.periods || '-';
+    const paymentRows = payments.map((p, index) => {
+      const deposit = toNumber(p.deposit || p.amount);
+      const total = toNumber(p.total || p.deposit || p.amount);
+      const goldWeight = calcGoldWeight(p);
+      const date = p.date ? new Date(p.date).toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'}) : '-';
+      return `
+        <div class="saving-payment">
+          <div class="saving-payment-title">ครั้งที่ ${index + 1} · ${date}</div>
+          <div class="stat-row"><span class="label">ลูกค้าออม</span><span class="value">฿${deposit.toLocaleString('th-TH')}</span></div>
+          ${total !== deposit ? `<div class="stat-row"><span class="label">รวมหลังโบนัส</span><span class="value">฿${total.toLocaleString('th-TH')}</span></div>` : ''}
+          <div class="stat-row"><span class="label">น้ำหนักที่ได้</span><span class="value highlight">${formatGoldWeight(goldWeight)} บาททอง</span></div>
+          ${p.goldPrice ? `<div class="stat-row"><span class="label">ราคาทองวันนั้น</span><span class="value">฿${Number(p.goldPrice).toLocaleString('th-TH')}</span></div>` : ''}
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">บัญชี ${s.id || s.accountNo || '-'}</div>
+            <div class="card-num">เปิด: ${s.startDate || s.openDate || '-'}</div>
+          </div>
+          ${badge}
+        </div>
+        <div class="stat-row"><span class="label">ยอดสะสม</span><span class="value highlight">฿${Number(current).toLocaleString()}</span></div>
+        ${payments.length ? `<div class="stat-row"><span class="label">ลูกค้าออมมาแล้ว</span><span class="value highlight">${payments.length} ครั้ง</span></div>` : ''}
+        ${payments.length ? `<div class="stat-row"><span class="label">ยอดลูกค้าฝากรวม</span><span class="value">฿${totalDeposit.toLocaleString('th-TH')}</span></div>` : ''}
+        ${payments.length ? `<div class="stat-row"><span class="label">ยอดรวมทั้งหมด</span><span class="value">฿${totalPaymentAmount.toLocaleString('th-TH')}</span></div>` : ''}
+        ${payments.length ? `<div class="stat-row"><span class="label">น้ำหนักทองสะสม</span><span class="value highlight">${formatGoldWeight(totalGoldWeight)} บาททอง</span></div>` : ''}
+        ${target ? `<div class="stat-row"><span class="label">เป้าหมาย</span><span class="value">฿${Number(target).toLocaleString()}</span></div>` : ''}
+        <div class="stat-row"><span class="label">งวดที่ออมแล้ว</span><span class="value">${periods} / ${totalPeriods}</span></div>
+        ${s.installment ? `<div class="stat-row"><span class="label">ยอดต่องวด</span><span class="value">฿${Number(s.installment).toLocaleString()}</span></div>` : ''}
+        ${target ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div style="text-align:center;font-size:11px;color:var(--text3);">${pct.toFixed(1)}%</div>` : ''}
+        ${paymentRows}
+      </div>
+    `;
+  }).join('');
+}
+
+// ============ PAWNS ============
+function renderPawns() {
+  const el = document.getElementById('pawnsList');
+  const active = allPawns.filter(p => !['closed','redeemed','forfeited','deleted'].includes(p.status));
+  if (active.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📦</div>
+        <div>ไม่มีตั๋วจำนำที่ active</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = active.map(p => {
+    const daysLeft = calcDaysLeft(p.dueDate);
+    const interest = Math.round(Number(p.amount || 0) * (Number(p.rate || p.interest || 0) / 100) * Number(p.months || 0));
+    const redeemTotal = Number(p.amount || 0) + interest;
+    const ticket = p.ticket || p.id || p.pawnNo || '-';
+    const dueText = p.dueDate ? new Date(p.dueDate).toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'}) : '-';
+    const startText = (p.date || p.startDate) ? new Date(p.date || p.startDate).toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'}) : '-';
+    let badge = '<span class="badge badge-active">ปกติ</span>';
+    if (daysLeft !== null) {
+      if (daysLeft < 0) badge = `<span class="badge badge-danger">เกิน ${-daysLeft} วัน</span>`;
+      else if (daysLeft === 0) badge = '<span class="badge badge-danger">ครบวันนี้</span>';
+      else if (daysLeft <= 3) badge = `<span class="badge badge-danger">อีก ${daysLeft} วัน</span>`;
+      else if (daysLeft <= 7) badge = `<span class="badge badge-warning">อีก ${daysLeft} วัน</span>`;
+    }
+
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${p.item || p.itemDescription || 'รายการจำนำ'}</div>
+            <div class="card-num">เลขที่ ${ticket}</div>
+          </div>
+          ${badge}
+        </div>
+        <div class="stat-row"><span class="label">ยอดจำนำ</span><span class="value highlight">฿${Number(p.amount || 0).toLocaleString()}</span></div>
+        <div class="stat-row"><span class="label">ยอดที่ต้องชำระ/ไถ่ถอน</span><span class="value highlight">฿${redeemTotal.toLocaleString('th-TH')}</span></div>
+        ${p.weight ? `<div class="stat-row"><span class="label">น้ำหนัก</span><span class="value">${p.weight} บาท</span></div>` : ''}
+        ${(p.rate || p.interest) ? `<div class="stat-row"><span class="label">ดอกเบี้ย</span><span class="value">${p.rate || p.interest}% / เดือน</span></div>` : ''}
+        <div class="stat-row"><span class="label">วันรับจำนำ</span><span class="value">${startText}</span></div>
+        <div class="stat-row"><span class="label">ครบกำหนดไถ่ถอน</span><span class="value" style="color:var(--danger);">${dueText}</span></div>
+        ${daysLeft !== null && daysLeft <= 7 ? `<div class="info-box" style="margin-top:8px;">แจ้งเตือน: ตั๋วนี้ครบกำหนด${daysLeft < 0 ? `เกินมาแล้ว ${-daysLeft} วัน` : daysLeft === 0 ? 'วันนี้' : `ในอีก ${daysLeft} วัน`} กรุณาติดต่อร้านเพื่อต่อดอกหรือไถ่ถอน</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function calcDaysLeft(dateStr) {
+  if (!dateStr) return null;
+  const due = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  due.setHours(0,0,0,0);
+  return Math.ceil((due - today) / (1000*60*60*24));
+}
+
+// ============ HISTORY ============
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  if (allTransactions.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📜</div>
+        <div>ยังไม่มีประวัติการทำรายการ</div>
+      </div>`;
+    return;
+  }
+
+  const sorted = [...allTransactions].sort((a, b) => {
+    const da = new Date(a.date || 0);
+    const db = new Date(b.date || 0);
+    return db - da;
+  });
+
+  el.innerHTML = sorted.slice(0, 30).map(t => {
+    const typeLabel = {
+      sale: '🛒 ซื้อทอง',
+      buy: '💵 ขายทอง',
+      pawn: '📦 รับจำนำ',
+      redeem: '✅ ไถ่ถอน',
+      savings: '💰 ออมทอง',
+      saving_deposit: '💰 ฝากออมทอง'
+    }[t.type] || t.type || '📋 รายการ';
+
+    const date = t.date ? new Date(t.date).toLocaleDateString('th-TH', {year:'numeric',month:'short',day:'numeric'}) : '-';
+
+    return `
+      <div class="card" style="padding:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:start;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:500;font-size:13px;">${typeLabel}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.productName || t.item || t.note || '-'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${date}</div>
+          </div>
+          <div style="text-align:right;font-weight:600;font-size:14px;color:var(--gold-dark);">
+            ฿${Number(t.total || t.amount || 0).toLocaleString()}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+window.switchTab = switchTab;
+window.doVerifyPhone = doVerifyPhone;
+
+// Start
+initApp();
+</script>
+</body>
+</html>

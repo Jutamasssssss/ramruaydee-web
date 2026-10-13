@@ -262,16 +262,16 @@ body { padding-bottom: 60px; }
   </div>
   <div class="login-form">
     <div class="info-box">
-      📱 กรุณายืนยันตัวตนด้วยเบอร์โทรที่ลงทะเบียนกับร้าน
+      บัญชี LINE นี้ยังไม่ได้เชื่อมกับสมาชิก กรุณาติดต่อร้านเพื่อยืนยันเจ้าของบัญชี
     </div>
     <div class="form-group">
       <label>เบอร์โทรที่ใช้กับร้าน</label>
       <input type="tel" id="phoneInput" placeholder="0812345678" maxlength="10" inputmode="numeric">
     </div>
     <div id="loginError" style="display:none;" class="error-box"></div>
-    <button class="btn" onclick="doVerifyPhone()">ยืนยันตัวตน</button>
+    <button class="btn" onclick="doVerifyPhone()">ติดต่อร้านเพื่อเชื่อมบัญชี</button>
     <div style="margin-top:14px;text-align:center;font-size:12px;color:var(--text3);">
-      ระบบจะตรวจสอบเบอร์ของคุณกับฐานข้อมูลของร้าน
+      ร้านจะตรวจสอบและเชื่อมบัญชีให้ ไม่ใช้เบอร์โทรเพียงอย่างเดียวเพื่อเปิดข้อมูล
     </div>
   </div>
 </div>
@@ -294,14 +294,14 @@ body { padding-bottom: 60px; }
 
   <div class="gold-price-card">
     <div class="label">ราคาทองวันนี้</div>
-    <div class="price" id="goldPrice">฿72,230</div>
+    <div class="price" id="goldPrice">กำลังโหลด</div>
     <div class="sub">บาทต่อทองคำ 1 บาท</div>
   </div>
 
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('savings')">💰 ออมทอง</div>
-    <div class="tab" onclick="switchTab('pawns')">📦 ตั๋วจำนำ</div>
-    <div class="tab" onclick="switchTab('history')">📜 ประวัติ</div>
+    <div class="tab active" onclick="switchTab('savings', this)">💰 ออมทอง</div>
+    <div class="tab" onclick="switchTab('pawns', this)">📦 ตั๋วจำนำ</div>
+    <div class="tab" onclick="switchTab('history', this)">📜 ประวัติ</div>
   </div>
 
   <div class="tab-content">
@@ -327,51 +327,13 @@ body { padding-bottom: 60px; }
   </div>
 </div>
 
-<!-- Firebase + LIFF -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc, getDocs }
-  from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBvSzkwvetsGtthnNljRZGMnlUC3pzfhXs",
-  authDomain: "gold-shop-acf19.firebaseapp.com",
-  projectId: "gold-shop-acf19",
-  storageBucket: "gold-shop-acf19.firebasestorage.app",
-  messagingSenderId: "10469108848",
-  appId: "1:10469108848:web:c6bcefb2444ce4d55458b5"
-};
-
-const fbApp = initializeApp(firebaseConfig);
-const fbDb = getFirestore(fbApp);
-
-window._fb = {
-  getAll: async (col) => {
-    const snap = await getDocs(collection(fbDb, col));
-    return snap.docs.map(d => d.data());
-  },
-  saveDoc: async (col, id, data) => {
-    await setDoc(doc(fbDb, col, String(id)), data);
-  },
-  getDoc: async (col, id) => {
-    const s = await getDoc(doc(fbDb, col, String(id)));
-    return s.exists() ? s.data() : null;
-  },
-  listen: (col, cb) => {
-    return onSnapshot(collection(fbDb, col), (snap) => {
-      cb(snap.docs.map(d => d.data()));
-    });
-  }
-};
-window._fbReady = true;
-</script>
-
 <!-- LIFF SDK -->
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 const LIFF_ID = '2009946701-JhrTliQr';
 const GOLD_PRICE_API_URL = 'https://ramruaydee-linebot-production.up.railway.app/api/gold-price';
+const MEMBER_API_URL = 'https://ramruaydee-linebot-production.up.railway.app/api/member/account';
 
 let lineProfile = null;
 let myCustomer = null;
@@ -382,8 +344,8 @@ let shopSettings = {
   name: 'ห้างทองร่ำรวยดี',
   logo: '◈',
   logoImage: '',
-  phone: '',
-  address: ''
+  phone: '0816619798',
+  address: 'ตลาดแสงอารีย์ คลอง 5 อำเภอลำลูกกา จังหวัดปทุมธานี'
 };
 
 // ============ INIT ============
@@ -397,49 +359,65 @@ async function initApp() {
     }
 
     lineProfile = await liff.getProfile();
-    console.log('LINE Profile:', lineProfile);
-
-    // Wait for Firebase
-    let waited = 0;
-    while (!window._fbReady && waited < 5000) {
-      await new Promise(r => setTimeout(r, 100));
-      waited += 100;
-    }
-
-    // Load shop settings
-    try {
-      const s = await window._fb.getDoc('settings', 'shop');
-      if (s) shopSettings = { ...shopSettings, ...s };
-    } catch (e) { console.warn('No shop settings'); }
-
     applyShopSettings();
-
-    await loadGoldPrice();
-
-    // Check if this LINE user is already linked to a customer
-    const customers = await window._fb.getAll('customers');
-    myCustomer = customers.find(c => c.lineUserId === lineProfile.userId);
-
-    if (myCustomer) {
-      // Already linked → show dashboard
+    const idToken = liff.getIDToken();
+    if (!idToken) throw Object.assign(new Error('Login required'), { code: 'LOGIN_REQUIRED' });
+    const response = await fetch(MEMBER_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.ok) throw Object.assign(new Error('Member service unavailable'), { code: data?.code || 'MEMBER_SERVICE_UNAVAILABLE' });
+    if (data.linked) {
+      if (!data.customer || !Array.isArray(data.savings) || !Array.isArray(data.pawns) || !Array.isArray(data.transactions)) {
+        throw Object.assign(new Error('Invalid member response'), { code: 'MEMBER_SERVICE_UNAVAILABLE' });
+      }
+      myCustomer = data.customer;
+      allSavings = data.savings;
+      allPawns = data.pawns;
+      allTransactions = data.transactions;
       await loadAndShowDashboard();
+      loadGoldPrice();
     } else {
-      // Show phone verify form
       showLoginPage();
     }
 
     document.getElementById('loadingScreen').style.display = 'none';
   } catch (err) {
-    console.error('Init error:', err);
-    document.getElementById('loadingScreen').innerHTML = `
-      <div style="text-align:center;padding:30px;">
-        <div style="font-size:48px;margin-bottom:14px;">⚠️</div>
-        <div style="color:var(--danger);font-weight:600;margin-bottom:8px;">เกิดข้อผิดพลาด</div>
-        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">${err.message || err}</div>
-        <button class="btn" onclick="location.reload()" style="max-width:200px;">ลองใหม่</button>
-      </div>
-    `;
+    showMemberError(err.code);
   }
+}
+
+function showMemberError(code) {
+  const loginRequired = code === 'LOGIN_REQUIRED';
+  const reviewRequired = code === 'ACCOUNT_LINK_REVIEW_REQUIRED' || code === 'ACCOUNT_DATA_LIMIT_REACHED';
+  const screen = document.getElementById('loadingScreen');
+  screen.replaceChildren();
+  const panel = document.createElement('div');
+  panel.style.cssText = 'text-align:center;padding:30px;max-width:380px';
+  const title = document.createElement('h2');
+  title.textContent = loginRequired ? 'กรุณาเข้าสู่ระบบ LINE อีกครั้ง' : reviewRequired ? 'กรุณาติดต่อร้านเพื่อตรวจบัญชี' : 'ยังเชื่อมต่อบัญชีสมาชิกไม่ได้';
+  title.style.cssText = 'font-size:20px;margin:0 0 12px;color:var(--text)';
+  const message = document.createElement('p');
+  message.textContent = loginRequired ? 'การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่' : 'ขณะนี้ยังแสดงยอดออมและประวัติไม่ได้ กรุณาติดต่อร้านเพื่อตรวจสอบยอด';
+  message.style.cssText = 'font-size:14px;line-height:1.7;margin-bottom:20px;color:var(--text2)';
+  const retry = document.createElement('button');
+  retry.className = 'btn';
+  retry.textContent = loginRequired ? 'เข้าสู่ระบบ LINE' : 'ลองเชื่อมต่ออีกครั้ง';
+  retry.onclick = loginRequired ? () => { liff.logout(); liff.login({ redirectUri: location.href }); } : () => location.reload();
+  const contact = document.createElement('a');
+  contact.href = 'https://line.me/ti/p/~@ramruaydee';
+  contact.textContent = 'ติดต่อห้างทองร่ำรวยดี';
+  contact.style.cssText = 'display:block;margin-top:18px;color:var(--gold-dark)';
+  const phone = document.createElement('a');
+  phone.href = 'tel:0816619798';
+  phone.textContent = 'โทร 081-661-9798';
+  phone.style.cssText = 'display:block;margin-top:12px;color:var(--gold-dark)';
+  panel.append(title, message, retry, contact, phone);
+  screen.append(panel);
 }
 
 async function loadGoldPrice() {
@@ -453,15 +431,9 @@ async function loadGoldPrice() {
       return;
     }
   } catch (e) {
-    console.warn('Gold API unavailable, fallback to Firebase spot', e);
+    document.getElementById('goldPrice').textContent = 'สอบถามร้าน';
   }
-
-  try {
-    const sp = await window._fb.getDoc('settings', 'spot');
-    if (sp && sp.value) {
-      document.getElementById('goldPrice').textContent = '฿' + Number(sp.value).toLocaleString('th-TH');
-    }
-  } catch (e) {}
+  document.getElementById('goldPrice').textContent = 'สอบถามร้าน';
 }
 
 function applyShopSettings() {
@@ -478,7 +450,7 @@ function applyShopSettings() {
     document.getElementById('contactPhone').href = 'tel:' + shopSettings.phone.replace(/\D/g,'');
   }
   if (shopSettings.address) {
-    document.getElementById('contactMap').href = 'https://maps.google.com/?q=' + encodeURIComponent(shopSettings.address);
+    document.getElementById('contactMap').href = 'https://maps.app.goo.gl/ymfQThEk2beNPFY58';
   }
 }
 
@@ -498,69 +470,15 @@ async function doVerifyPhone() {
   const errEl = document.getElementById('loginError');
   errEl.style.display = 'none';
 
-  if (phoneRaw.length < 9 || phoneRaw.length > 10) {
-    errEl.textContent = 'กรุณาใส่เบอร์โทร 9-10 หลัก';
+  if (!/^0\d{8,9}$/.test(phoneRaw)) {
+    errEl.textContent = 'กรุณาใส่เบอร์โทรที่ลงทะเบียนกับร้าน';
     errEl.style.display = 'block';
     return;
   }
 
-  // helper: ถอด non-digits และเทียบเบอร์แบบยืดหยุ่น
-  const matchPhone = (a, b) => {
-    if (!a || !b) return false;
-    const aa = String(a).replace(/\D/g, '');
-    const bb = String(b).replace(/\D/g, '');
-    if (!aa || !bb) return false;
-    return aa === bb || aa === '0' + bb || bb === '0' + aa || aa.endsWith(bb) || bb.endsWith(aa);
-  };
-
-  // 1. หาใน customers ก่อน
-  const customers = await window._fb.getAll('customers');
-  let found = customers.find(c => matchPhone(c.phone, phoneRaw));
-  let foundFromOther = null;
-
-  // 2. ถ้าไม่เจอใน customers — ค้นจาก savings, pawns, transactions
-  if (!found) {
-    const [savings, pawns, transactions] = await Promise.all([
-      window._fb.getAll('savings'),
-      window._fb.getAll('pawns'),
-      window._fb.getAll('transactions')
-    ]);
-
-    // หาทั้ง 3 collections
-    const fromSavings = savings.find(s => matchPhone(s.customerPhone || s.phone, phoneRaw));
-    const fromPawns = pawns.find(p => matchPhone(p.customerPhone || p.phone, phoneRaw));
-    const fromTrans = transactions.find(t => matchPhone(t.customerPhone || t.phone, phoneRaw));
-
-    foundFromOther = fromSavings || fromPawns || fromTrans;
-  }
-
-  if (!found && !foundFromOther) {
-    errEl.innerHTML = `เบอร์ <b>${phoneRaw}</b> ไม่พบในระบบของร้าน<br>กรุณาติดต่อร้านเพื่อลงทะเบียน`;
-    errEl.style.display = 'block';
-    return;
-  }
-
-  // ถ้าหาจาก collection อื่น — สร้าง customer record ใหม่
-  if (!found && foundFromOther) {
-    found = {
-      id: 'cust_' + phoneRaw + '_' + Date.now(),
-      name: foundFromOther.customerName || foundFromOther.customer || foundFromOther.name || lineProfile.displayName || 'ลูกค้า',
-      phone: phoneRaw,
-      points: 0,
-      transactions: []
-    };
-  }
-
-  // Link LINE userId to customer
-  found.lineUserId = lineProfile.userId;
-  found.lineDisplayName = lineProfile.displayName;
-  found.linePictureUrl = lineProfile.pictureUrl;
-  if (!found.id) found.id = 'cust_' + phoneRaw + '_' + Date.now();
-  if (!found.phone) found.phone = phoneRaw;
-
-  await window._fb.saveDoc('customers', found.id, found);
-  myCustomer = found;
-  await loadAndShowDashboard();
+  const message = 'ขอเชื่อมบัญชีสมาชิกกับ LINE\nเบอร์ที่ลงทะเบียน: ' + phoneRaw
+    + '\nรหัสบัญชี LINE สมาชิก: ' + lineProfile.userId;
+  location.href = 'https://line.me/R/oaMessage/@ramruaydee/?' + encodeURIComponent(message);
 }
 
 // ============ DASHBOARD ============
@@ -569,42 +487,6 @@ async function loadAndShowDashboard() {
   document.getElementById('userName').textContent = myCustomer.name || lineProfile.displayName;
   document.getElementById('userPhone').textContent = '📱 ' + (myCustomer.phone || '-');
   document.getElementById('userAvatar').src = lineProfile.pictureUrl || '';
-
-  // Load data
-  const [savings, pawns, transactions] = await Promise.all([
-    window._fb.getAll('savings'),
-    window._fb.getAll('pawns'),
-    window._fb.getAll('transactions')
-  ]);
-
-  const myPhone = (myCustomer.phone || '').replace(/\D/g, '');
-  const myId = myCustomer.id;
-  const myName = myCustomer.name;
-
-  // Helper: phone matching แบบยืดหยุ่น
-  const matchPhone = (a, b) => {
-    if (!a || !b) return false;
-    const aa = String(a).replace(/\D/g, '');
-    const bb = String(b).replace(/\D/g, '');
-    if (!aa || !bb) return false;
-    return aa === bb || aa === '0' + bb || bb === '0' + aa || aa.endsWith(bb) || bb.endsWith(aa);
-  };
-
-  allSavings = savings.filter(s =>
-    matchPhone(s.customerPhone || s.phone, myPhone) ||
-    s.customerId === myId ||
-    (myName && (s.customerName === myName || s.customer === myName))
-  );
-  allPawns = pawns.filter(p =>
-    matchPhone(p.customerPhone || p.phone, myPhone) ||
-    p.customerId === myId ||
-    (myName && (p.customerName === myName || p.customer === myName))
-  );
-  allTransactions = transactions.filter(t =>
-    matchPhone(t.customerPhone || t.phone, myPhone) ||
-    t.customerId === myId ||
-    (myName && (t.customerName === myName || t.customer === myName))
-  );
 
   showMainApp();
   renderSavings();
@@ -616,6 +498,10 @@ async function loadAndShowDashboard() {
 function toNumber(value) {
   const n = Number(value || 0);
   return Number.isFinite(n) ? n : 0;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 }
 
 function calcGoldWeight(payment) {
@@ -680,8 +566,8 @@ function renderSavings() {
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">บัญชี ${s.id || s.accountNo || '-'}</div>
-            <div class="card-num">เปิด: ${s.startDate || s.openDate || '-'}</div>
+            <div class="card-title">บัญชี ${escapeHtml(s.id || s.accountNo || '-')}</div>
+            <div class="card-num">เปิด: ${escapeHtml(s.startDate || s.openDate || '-')}</div>
           </div>
           ${badge}
         </div>
@@ -691,7 +577,7 @@ function renderSavings() {
         ${payments.length ? `<div class="stat-row"><span class="label">ยอดรวมทั้งหมด</span><span class="value">฿${totalPaymentAmount.toLocaleString('th-TH')}</span></div>` : ''}
         ${payments.length ? `<div class="stat-row"><span class="label">น้ำหนักทองสะสม</span><span class="value highlight">${formatGoldWeight(totalGoldWeight)} บาททอง</span></div>` : ''}
         ${target ? `<div class="stat-row"><span class="label">เป้าหมาย</span><span class="value">฿${Number(target).toLocaleString()}</span></div>` : ''}
-        <div class="stat-row"><span class="label">งวดที่ออมแล้ว</span><span class="value">${periods} / ${totalPeriods}</span></div>
+        <div class="stat-row"><span class="label">งวดที่ออมแล้ว</span><span class="value">${escapeHtml(periods)} / ${escapeHtml(totalPeriods)}</span></div>
         ${s.installment ? `<div class="stat-row"><span class="label">ยอดต่องวด</span><span class="value">฿${Number(s.installment).toLocaleString()}</span></div>` : ''}
         ${target ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div style="text-align:center;font-size:11px;color:var(--text3);">${pct.toFixed(1)}%</div>` : ''}
@@ -733,15 +619,15 @@ function renderPawns() {
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">${p.item || p.itemDescription || 'รายการจำนำ'}</div>
-            <div class="card-num">เลขที่ ${ticket}</div>
+            <div class="card-title">${escapeHtml(p.item || p.itemDescription || 'รายการจำนำ')}</div>
+            <div class="card-num">เลขที่ ${escapeHtml(ticket)}</div>
           </div>
           ${badge}
         </div>
         <div class="stat-row"><span class="label">ยอดจำนำ</span><span class="value highlight">฿${Number(p.amount || 0).toLocaleString()}</span></div>
         <div class="stat-row"><span class="label">ยอดที่ต้องชำระ/ไถ่ถอน</span><span class="value highlight">฿${redeemTotal.toLocaleString('th-TH')}</span></div>
-        ${p.weight ? `<div class="stat-row"><span class="label">น้ำหนัก</span><span class="value">${p.weight} บาท</span></div>` : ''}
-        ${(p.rate || p.interest) ? `<div class="stat-row"><span class="label">ดอกเบี้ย</span><span class="value">${p.rate || p.interest}% / เดือน</span></div>` : ''}
+        ${p.weight ? `<div class="stat-row"><span class="label">น้ำหนัก</span><span class="value">${escapeHtml(p.weight)} บาท</span></div>` : ''}
+        ${(p.rate || p.interest) ? `<div class="stat-row"><span class="label">ดอกเบี้ย</span><span class="value">${escapeHtml(p.rate || p.interest)}% / เดือน</span></div>` : ''}
         <div class="stat-row"><span class="label">วันรับจำนำ</span><span class="value">${startText}</span></div>
         <div class="stat-row"><span class="label">ครบกำหนดไถ่ถอน</span><span class="value" style="color:var(--danger);">${dueText}</span></div>
         ${daysLeft !== null && daysLeft <= 7 ? `<div class="info-box" style="margin-top:8px;">แจ้งเตือน: ตั๋วนี้ครบกำหนด${daysLeft < 0 ? `เกินมาแล้ว ${-daysLeft} วัน` : daysLeft === 0 ? 'วันนี้' : `ในอีก ${daysLeft} วัน`} กรุณาติดต่อร้านเพื่อต่อดอกหรือไถ่ถอน</div>` : ''}
@@ -793,8 +679,8 @@ function renderHistory() {
       <div class="card" style="padding:12px;">
         <div style="display:flex;justify-content:space-between;align-items:start;">
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:500;font-size:13px;">${typeLabel}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.productName || t.item || t.note || '-'}</div>
+            <div style="font-weight:500;font-size:13px;">${escapeHtml(typeLabel)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${escapeHtml(t.productName || t.item || t.note || '-')}</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">${date}</div>
           </div>
           <div style="text-align:right;font-weight:600;font-size:14px;color:var(--gold-dark);">
@@ -807,10 +693,10 @@ function renderHistory() {
 }
 
 // ============ TABS ============
-function switchTab(tab) {
+function switchTab(tab, button) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  if (button) button.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
 }
 

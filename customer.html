@@ -293,7 +293,7 @@ body { padding-bottom: 60px; }
   </div>
 
   <div class="gold-price-card">
-    <div class="label">ราคาทองวันนี้</div>
+    <div class="label">ราคาทองอ้างอิง</div>
     <div class="price" id="goldPrice">กำลังโหลด</div>
     <div class="sub">บาทต่อทองคำ 1 บาท</div>
   </div>
@@ -343,7 +343,7 @@ let allTransactions = [];
 let shopSettings = {
   name: 'ห้างทองร่ำรวยดี',
   logo: '◈',
-  logoImage: '',
+  logoImage: 'https://ramruaydee.com/logo-clean.jpg',
   phone: '0816619798',
   address: 'ตลาดแสงอารีย์ คลอง 5 อำเภอลำลูกกา จังหวัดปทุมธานี'
 };
@@ -595,7 +595,7 @@ function renderPawns() {
     el.innerHTML = `
       <div class="empty">
         <div class="empty-icon">📦</div>
-        <div>ไม่มีตั๋วจำนำที่ active</div>
+        <div>ไม่มีตั๋วจำนำที่ยังเปิดอยู่</div>
       </div>`;
     return;
   }
